@@ -1,20 +1,14 @@
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
+import { chromium } from "@playwright/test";
 
 export default async function handler(req, res) {
   const { url } = req.query;
-  if (!url) {
-    return res.status(400).json({ success: false, error: "Missing ?url parameter" });
-  }
+  if (!url) return res.status(400).json({ success: false, error: "Missing ?url parameter" });
 
+  let browser;
   try {
-    const executablePath = await chromium.executablePath();
-
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
+    browser = await chromium.launch({
       headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
@@ -26,12 +20,11 @@ export default async function handler(req, res) {
       (await page.$eval("img", el => el.src).catch(() => null));
 
     const title = await page.title();
-
     await browser.close();
 
     res.status(200).json({ success: true, title, image });
-  } catch (error) {
-    console.error("Scrape error:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    if (browser) await browser.close();
+    res.status(500).json({ success: false, error: err.message });
   }
 }
