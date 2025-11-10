@@ -1,0 +1,16 @@
+{
+  "name": "playwright-scraper-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "main": "api/scrape.js",
+  "scripts": {
+    "start": "node api/scrape.js"
+  },
+  "dependencies": {
+    "playwright": "^1.47.2",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
