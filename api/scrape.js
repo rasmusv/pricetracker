@@ -1,13 +1,13 @@
-import chromium from "@sparticuz/chromium-min";
+import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
 export default async function handler(req, res) {
-  try {
-    const url = req.query.url;
-    if (!url) {
-      return res.status(400).json({ success: false, error: "Missing ?url parameter" });
-    }
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ success: false, error: "Missing ?url parameter" });
+  }
 
+  try {
     const executablePath = await chromium.executablePath();
 
     const browser = await puppeteer.launch({
