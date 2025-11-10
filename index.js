@@ -1,19 +1,23 @@
 import express from "express";
 import cors from "cors";
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium-min";
+import puppeteer from "puppeteer-core";
 
 const app = express();
 app.use(cors());
 
 app.get("/api/scrape", async (req, res) => {
   const { url } = req.query;
-  if (!url) return res.status(400).json({ error: "Missing ?url parameter" });
+  if (!url) return res.status(400).json({ success: false, error: "Missing ?url parameter" });
 
   try {
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     });
+
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded" });
 
@@ -26,10 +30,10 @@ app.get("/api/scrape", async (req, res) => {
     });
 
     await browser.close();
-    res.json(data);
+    res.json({ success: true, ...data });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
