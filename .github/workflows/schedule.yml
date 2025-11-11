@@ -1,0 +1,33 @@
+name: Run Price Scraper
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Runs every 6 hours
+  workflow_dispatch: 
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 google-cloud-storage
+
+      # Authorizes Google Cloud using the Service Account key
+      - name: Authorize Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }} 
+
+      # Runs the Python script, passing Base44 and GCS data via environment variables
+      - name: Run Scraper Script
+        run: python scraper.py
+        env:
+          BASE44_GET_ENDPOINT: ${{ secrets.BASE44_GET_ENDPOINT }}
+          BASE44_POST_ENDPOINT: ${{ secrets.BASE44_POST_ENDPOINT }}
+          BASE44_API_KEY: ${{ secrets.BASE44_API_KEY }}
+          GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
