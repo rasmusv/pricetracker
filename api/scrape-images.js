@@ -1,7 +1,7 @@
-import cheerio from "cheerio";
+import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
-  const url = req.query.url;
+  const { url } = req.query;
   if (!url) {
     res.status(400).json({ success: false, error: "Missing ?url=" });
     return;
@@ -27,12 +27,13 @@ export default async function handler(req, res) {
       if (src) images.add(new URL(src, url).href);
     });
 
-    // 2. <img> tags
+    // 2. <img> tags (lazyload support)
     $("img").each((_, el) => {
       const src =
         $(el).attr("src") ||
         $(el).attr("data-src") ||
-        $(el).attr("data-lazy");
+        $(el).attr("data-lazy") ||
+        $(el).attr("data-lazy-src");
       if (src) images.add(new URL(src, url).href);
     });
 
@@ -50,25 +51,26 @@ export default async function handler(req, res) {
     // 4. Inline background-image
     $('[style*="background"]').each((_, el) => {
       const style = $(el).attr("style");
-      const match = style.match(/url\(["']?(.*?)["']?\)/i);
+      const match = style.match(/url\\(["']?(.*?)["']?\\)/i);
       if (match && match[1]) images.add(new URL(match[1], url).href);
     });
 
-    // 5. JSON-LD image fields
+    // 5. JSON-LD
     $('script[type="application/ld+json"]').each((_, el) => {
       try {
         const json = JSON.parse($(el).html());
-        const traverse = (obj) => {
-          if (Array.isArray(obj)) obj.forEach(traverse);
+        const findImages = (obj) => {
+          if (Array.isArray(obj)) obj.forEach(findImages);
           else if (typeof obj === "object" && obj !== null) {
             if (obj.image) {
-              if (Array.isArray(obj.image)) obj.image.forEach((i) => images.add(new URL(i, url).href));
+              if (Array.isArray(obj.image))
+                obj.image.forEach((i) => images.add(new URL(i, url).href));
               else images.add(new URL(obj.image, url).href);
             }
-            Object.values(obj).forEach(traverse);
+            Object.values(obj).forEach(findImages);
           }
         };
-        traverse(json);
+        findImages(json);
       } catch {}
     });
 
