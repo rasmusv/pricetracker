@@ -1,0 +1,79 @@
+{
+  "exported_at": "2025-11-11T13:44:44.176Z",
+  "total_users": 1,
+  "data": {
+    "products": [
+      {
+        "product_name": "ÖKO kõik-ühes nõudepesumasinatabletid 25 tk",
+        "identifiers": {
+          "asin": null,
+          "ean": null,
+          "isbn": null,
+          "upc": null,
+          "gtin": null,
+          "mpn": null
+        },
+        "image_url": null,
+        "category": "Nõudepesu",
+        "brand": "Mulieres",
+        "description": "ÖKO kõik-ühes nõudepesumasinatabletid, mis sisaldavad 98% looduslikke koostisosade, pakuvad tõhusat puhastust ilma täiendava soola või loputusvahendita.",
+        "tracking_count": 1,
+        "id": "69113546079e5a546398c5f2",
+        "created_date": "2025-11-10T00:43:50.271000",
+        "updated_date": "2025-11-10T00:43:50.271000",
+        "created_by_id": "69092c5ed0de35823fb67fb1",
+        "created_by": "rasmusv@gmail.com",
+        "is_sample": false
+      }
+    ],
+    "listings": [
+      {
+        "product_id": "69113546079e5a546398c5f2",
+        "url": "https://mulieres.eu/toode/eco-noudepesumasina-tabletid/",
+        "store_name": "Mulieres",
+        "store_domain": "mulieres.eu",
+        "current_price": 8.31,
+        "currency": "EUR",
+        "price_history": [
+          {
+            "price": 8.31,
+            "date": "2025-11-10T00:43:50.365Z"
+          }
+        ],
+        "lowest_price": 8.31,
+        "highest_price": 8.31,
+        "initial_price": 8.31,
+        "is_available": true,
+        "last_checked": "2025-11-10T00:43:50.365Z",
+        "tracking_count": 1,
+        "id": "69113546935f3712e2f6a63e",
+        "created_date": "2025-11-10T00:43:50.500000",
+        "updated_date": "2025-11-10T00:43:50.500000",
+        "created_by_id": "69092c5ed0de35823fb67fb1",
+        "created_by": "rasmusv@gmail.com",
+        "is_sample": false
+      }
+    ],
+    "tracked_products": [
+      {
+        "product_id": "69113546079e5a546398c5f2",
+        "listing_id": "69113546935f3712e2f6a63e",
+        "target_price": null,
+        "notes": null,
+        "track_all_listings": true,
+        "id": "691135465012a78693824e5e",
+        "created_date": "2025-11-10T00:43:50.798000",
+        "updated_date": "2025-11-10T00:43:50.798000",
+        "created_by_id": "69092c5ed0de35823fb67fb1",
+        "created_by": "rasmusv@gmail.com",
+        "is_sample": false
+      }
+    ]
+  },
+  "stats": {
+    "total_products": 1,
+    "total_listings": 1,
+    "total_tracked": 1,
+    "active_users": 1
+  }
+}
