@@ -1,10 +1,10 @@
 const GITHUB_JSON_URL =
   "https://raw.githubusercontent.com/rasmusv/pricetracker/main/data/pricewatch.json";
-const SCRAPER_URL = "https://pricetracker-scraper.vercel.app/api/scrape-images";
+const SCRAPER_URL = "https://pricetracker-opal.vercel.app/api/scrape-images";
 
 export default async function handler(req, res) {
   try {
-    // 1. Fetch existing JSON from GitHub
+    // 1. Load JSON from GitHub
     const response = await fetch(GITHUB_JSON_URL);
     if (!response.ok) throw new Error("Failed to fetch pricewatch.json");
 
@@ -16,25 +16,33 @@ export default async function handler(req, res) {
     const updatedProducts = [];
     let updatedCount = 0;
 
-    // 2. Loop through each product
+    // 2. Iterate through all products
     for (const product of data.products) {
-      if (!product.image_url || product.image_url === null || product.image_url.trim?.() === "") {
+      const productId = product.id || "(no id)";
+      const url = product.url || product.product_url;
+
+      if (!url) {
+        console.warn(`⚠️ Product ${productId} has no URL, skipping`);
+        updatedProducts.push(product);
+        continue;
+      }
+
+      if (!product.image_url || !product.image_url.trim?.()) {
         try {
-          // Try to find image for this product
           const scrapeRes = await fetch(
-            `${SCRAPER_URL}?url=${encodeURIComponent(product.product_url)}`
+            `${SCRAPER_URL}?url=${encodeURIComponent(url)}`
           );
           const scrapeData = await scrapeRes.json();
 
           if (scrapeData.success && Array.isArray(scrapeData.images) && scrapeData.images.length > 0) {
             product.image_url = scrapeData.images[0];
             updatedCount++;
-            console.log(`✅ ${product.product_name} → ${product.image_url}`);
+            console.log(`✅ ${productId} → ${product.image_url}`);
           } else {
-            console.log(`❌ No image found for ${product.product_name}`);
+            console.log(`❌ No images found for ${productId}`);
           }
         } catch (err) {
-          console.error(`Scrape failed for ${product.product_name}:`, err.message);
+          console.error(`❌ Error scraping ${productId}:`, err.message);
         }
       }
 
@@ -48,7 +56,11 @@ export default async function handler(req, res) {
       success: true,
       total: data.products.length,
       updated: updatedCount,
-      products: enriched.products,
+      products: enriched.products.map((p) => ({
+        id: p.id,
+        product_name: p.product_name,
+        image_url: p.image_url || null,
+      })),
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
