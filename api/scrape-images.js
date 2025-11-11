@@ -62,11 +62,14 @@ export default async function handler(req, res) {
         const findImages = (obj) => {
           if (Array.isArray(obj)) obj.forEach(findImages);
           else if (typeof obj === "object" && obj !== null) {
-            if (obj.image) {
-              if (Array.isArray(obj.image))
-                obj.image.forEach((i) => images.add(new URL(i, url).href));
-              else images.add(new URL(obj.image, url).href);
-            }
+if (obj.image) {
+  const addImage = (i) => {
+    if (typeof i === "string") images.add(new URL(i, url).href);
+    else if (i && typeof i === "object" && i.url) images.add(new URL(i.url, url).href);
+  };
+  if (Array.isArray(obj.image)) obj.image.forEach(addImage);
+  else addImage(obj.image);
+}
             Object.values(obj).forEach(findImages);
           }
         };
