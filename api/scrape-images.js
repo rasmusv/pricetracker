@@ -1,6 +1,16 @@
 import * as cheerio from "cheerio";
 
 export default async function handler(req, res) {
+  // --- CORS headers ---
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+
   const { url } = req.query;
   if (!url) {
     res.status(400).json({ success: false, error: "Missing ?url=" });
@@ -13,7 +23,9 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      res.status(400).json({ success: false, error: `Failed to fetch ${url}` });
+      res
+        .status(400)
+        .json({ success: false, error: `Failed to fetch ${url} (${response.status})` });
       return;
     }
 
@@ -21,13 +33,11 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     const images = new Set();
 
-    // 1. og:image / twitter:image
     $('meta[property="og:image"], meta[name="twitter:image"]').each((_, el) => {
       const src = $(el).attr("content");
       if (src) images.add(new URL(src, url).href);
     });
 
-    // 2. <img> tags (lazyload support)
     $("img").each((_, el) => {
       const src =
         $(el).attr("src") ||
@@ -37,7 +47,6 @@ export default async function handler(req, res) {
       if (src) images.add(new URL(src, url).href);
     });
 
-    // 3. <source srcset>
     $("source").each((_, el) => {
       const srcset = $(el).attr("srcset");
       if (srcset) {
@@ -48,32 +57,32 @@ export default async function handler(req, res) {
       }
     });
 
-    // 4. Inline background-image
     $('[style*="background"]').each((_, el) => {
       const style = $(el).attr("style");
-      const match = style.match(/url\\(["']?(.*?)["']?\\)/i);
+      if (!style) return;
+      const match = style.match(/url\(["']?(.*?)["']?\)/i);
       if (match && match[1]) images.add(new URL(match[1], url).href);
     });
 
-    // 5. JSON-LD
     $('script[type="application/ld+json"]').each((_, el) => {
       try {
         const json = JSON.parse($(el).html());
-        const findImages = (obj) => {
-          if (Array.isArray(obj)) obj.forEach(findImages);
+        const traverse = (obj) => {
+          if (Array.isArray(obj)) obj.forEach(traverse);
           else if (typeof obj === "object" && obj !== null) {
-if (obj.image) {
-  const addImage = (i) => {
-    if (typeof i === "string") images.add(new URL(i, url).href);
-    else if (i && typeof i === "object" && i.url) images.add(new URL(i.url, url).href);
-  };
-  if (Array.isArray(obj.image)) obj.image.forEach(addImage);
-  else addImage(obj.image);
-}
-            Object.values(obj).forEach(findImages);
+            if (obj.image) {
+              const addImage = (i) => {
+                if (typeof i === "string") images.add(new URL(i, url).href);
+                else if (i && typeof i === "object" && i.url)
+                  images.add(new URL(i.url, url).href);
+              };
+              if (Array.isArray(obj.image)) obj.image.forEach(addImage);
+              else addImage(obj.image);
+            }
+            Object.values(obj).forEach(traverse);
           }
         };
-        findImages(json);
+        traverse(json);
       } catch {}
     });
 
