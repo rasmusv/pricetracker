@@ -33,6 +33,33 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     const images = new Set();
 
+    // --- AMAZON SPECIAL CASE ---
+    if (url.includes("amazon.")) {
+      const match = html.match(/"ImageBlockATF".*?(\{.*?\})\s*<\/script>/s);
+      if (match) {
+        try {
+          const jsonStr = match[1];
+          const parsed = JSON.parse(jsonStr);
+          const mainImages = parsed.main || parsed.legacy || parsed.initial || [];
+          mainImages.forEach((img) => {
+            if (img && img.lg && img.lg.startsWith("https://"))
+              images.add(img.lg);
+            else if (typeof img === "string" && img.startsWith("https://"))
+              images.add(img);
+          });
+        } catch (err) {
+          console.warn("Amazon JSON parse error:", err.message);
+        }
+      }
+
+      // fallback: try meta tags too
+      $('meta[property="og:image"], meta[name="twitter:image"]').each((_, el) => {
+        const src = $(el).attr("content");
+        if (src) images.add(src);
+      });
+    }
+
+    // --- NORMAL SCRAPING ---
     $('meta[property="og:image"], meta[name="twitter:image"]').each((_, el) => {
       const src = $(el).attr("content");
       if (src) images.add(new URL(src, url).href);
@@ -60,8 +87,8 @@ export default async function handler(req, res) {
     $('[style*="background"]').each((_, el) => {
       const style = $(el).attr("style");
       if (!style) return;
-      const match = style.match(/url\(["']?(.*?)["']?\)/i);
-      if (match && match[1]) images.add(new URL(match[1], url).href);
+      const matchBg = style.match(/url\(["']?(.*?)["']?\)/i);
+      if (matchBg && matchBg[1]) images.add(new URL(matchBg[1], url).href);
     });
 
     $('script[type="application/ld+json"]').each((_, el) => {
